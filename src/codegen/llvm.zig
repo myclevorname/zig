@@ -233,6 +233,7 @@ pub fn targetTriple(allocator: Allocator, target: *const std.Target) ![]const u8
         .managarm => "managarm",
 
         .@"3ds",
+        .ams,
         .opengl,
         .plan9,
         .contiki,

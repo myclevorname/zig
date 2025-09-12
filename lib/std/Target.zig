@@ -70,6 +70,8 @@ pub const Os = struct {
         opengl,
         vulkan,
 
+        ams,
+
         // LLVM tags deliberately omitted:
         // - bridgeos
         // - darwin
@@ -213,6 +215,8 @@ pub const Os = struct {
                 .opencl,
                 .opengl,
                 .vulkan,
+
+                .ams,
                 => .semver,
 
                 .hurd => .hurd,
@@ -681,6 +685,13 @@ pub const Os = struct {
                         .max = .{ .major = 1, .minor = 4, .patch = 321 },
                     },
                 },
+
+                .ams => .{
+                    .semver = .{
+                        .min = .{ .major = 1, .minor = 0, .patch = 0 }, // 1.0b1
+                        .max = .{ .major = 3, .minor = 10, .patch = 0 }, // 3.10
+                    },
+                },
             };
         }
     };
@@ -920,6 +931,7 @@ pub const Abi = enum {
             .opencl,
             .opengl,
             .vulkan,
+            .ams,
             => .none,
         };
     }
@@ -1031,7 +1043,7 @@ pub const ObjectFormat = enum {
             .aix => .xcoff,
             .driverkit, .ios, .macos, .tvos, .visionos, .watchos => .macho,
             .plan9 => .plan9,
-            .uefi, .windows => .coff,
+            .uefi, .windows, .ams => .coff,
             .zos => .goff,
             else => switch (arch) {
                 .spirv32, .spirv64 => .spirv,
@@ -2124,6 +2136,7 @@ pub fn requiresLibC(target: *const Target) bool {
         .plan9,
         .other,
         .@"3ds",
+        .ams
         => false,
     };
 }
@@ -2241,6 +2254,8 @@ pub const DynamicLinker = struct {
             .ps4,
             .ps5,
             .vita,
+
+            .ams
             => .none,
         };
     }
@@ -2625,6 +2640,8 @@ pub const DynamicLinker = struct {
             .opencl,
             .opengl,
             .vulkan,
+
+            .ams
             => none,
 
             // TODO go over each item in this list and either move it to the above list, or
@@ -3154,6 +3171,15 @@ pub fn cTypeBitSize(target: *const Target, c_type: CType) u16 {
             .int, .uint, .float => return 32,
             .long, .ulong => return 64,
             .longlong, .ulonglong, .double, .longdouble => return 64,
+        },
+
+        .ams => switch (c_type) {
+            .char => return 8,
+            // Note: int is 32 bits if -mlong is specified in GCC4TI
+            .short, .ushort, .int, .uint => return 16,
+            .long, .ulong => return 32,
+            .float, .double => @panic("implement TI BCD floats"), // TODO
+            .longlong, .ulonglong, .longdouble => @panic("type not supported for AMS"), // TODO
         },
 
         .ps3,
